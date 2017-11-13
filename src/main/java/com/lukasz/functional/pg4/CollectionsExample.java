@@ -4,6 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,12 +19,13 @@ public class CollectionsExample {
         }
     };
 
-    public static final Function<String, String> LAST_WORD_TRANSFORMER = new Function<String, String>() {
-        @Override
-        public String apply(String s) {
-            return lastWord(s);
-        }
-    };
+    private static final Function<String, String> LAST_WORD_TRANSFORMER =
+            (phrase) -> {
+                return Iterables.getLast(
+                        Arrays.asList(phrase.split(" ")), ""
+                );
+            };
+
     private static Logger log = LoggerFactory.getLogger(CollectionsExample.class);
 
     final static String[] food = {
@@ -50,11 +52,6 @@ public class CollectionsExample {
 
         return Joiner.on(" & ").join(lastWords);
     }
-
-    private static String lastWord(String s) {
-        return s.substring(s.lastIndexOf(" ")+1);
-    }
-
 
     public static void main(String[] args) {
         log.debug("Collection example...");
