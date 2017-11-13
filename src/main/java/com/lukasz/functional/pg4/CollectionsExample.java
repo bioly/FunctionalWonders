@@ -1,30 +1,24 @@
 package com.lukasz.functional.pg4;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class CollectionsExample {
 
-    private static final Predicate<String> NON_EMPTY = new Predicate<String>() {
-        @Override
-        public boolean apply(String s) {
-            return !s.isEmpty();
-        }
-    };
+    private static final Predicate<String> NON_EMPTY = s -> !s.isEmpty();
+
+    private static BinaryOperator<String> toLastOne =
+            (allSoFar, nexElement) -> nexElement;
 
     private static final Function<String, String> LAST_WORD_TRANSFORMER =
-            (phrase) -> {
-                return Iterables.getLast(
-                        Arrays.asList(phrase.split(" ")), ""
-                );
-            };
+                phrase -> Arrays.asList(phrase.split(" ")).stream()
+                    .reduce(toLastOne).orElse("");
+
 
     private static Logger log = LoggerFactory.getLogger(CollectionsExample.class);
 
@@ -40,17 +34,16 @@ public class CollectionsExample {
 
     private static String summary(String[] food) {
 
-//        final Iterable<String> nonEmpties = Iterables.filter(Arrays.asList(food),
-//                NON_EMPTY);
-//
-//        final Iterable<String> lastWords = Iterables.transform(nonEmpties, LAST_WORD_TRANSFORMER);
-
-        FluentIterable<String> lastWords =
-                FluentIterable.from(Arrays.asList(food))
+        return Arrays.asList(food).stream()
                 .filter(NON_EMPTY)
-                .transform(LAST_WORD_TRANSFORMER);
+                .map(LAST_WORD_TRANSFORMER)
+                .reduce(joinOn(" & "))
+                .orElse("");
+    }
 
-        return Joiner.on(" & ").join(lastWords);
+    private static BinaryOperator<String> joinOn(String connector) {
+        return (allSoFar, nextElement) ->
+                allSoFar + connector + nextElement;
     }
 
     public static void main(String[] args) {
