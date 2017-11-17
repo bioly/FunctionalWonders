@@ -28,6 +28,13 @@ public class SalesGenerator {
         return sales;
     }
 
+    public static Sale getRandomSale(final Date date){
+        return new Sale(getRandomStore(),
+                    date,
+                    Optional.of(getRandomManagerName()),
+                    getRandomItemList());
+    }
+
     private static List<Item> getRandomItemList() {
         List<Item> items = new ArrayList<>();
         int numberOfItems = random.nextInt(10);

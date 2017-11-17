@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.lukasz.functional.pg6.utils.SalesGenerator.getRandomSale;
 import static com.lukasz.functional.pg6.utils.SalesGenerator.getRandomSaleListBySizeAndGivenDate;
 
 public class TodaySales {
@@ -19,6 +20,20 @@ public class TodaySales {
 
     static final List<Sale> sales =
             getRandomSaleListBySizeAndGivenDate(new Random().nextInt(40), new Date());
+
+    public static Stream<Sale>  streamOf(final long qty) {
+        return Stream.generate(supplier).limit(qty);
+    }
+
+    public static Supplier<Sale> supplier = () ->
+            getRandomSale(new Date());
+
+    public static Optional<Sale> findSaleOf(final String itemName){
+        return sales.stream()
+                .filter(sale -> sale.getItems().stream().anyMatch(
+                        item -> item.getName().equals(itemName)
+                )).findFirst();
+    }
 
     public static void main(String[] args) {
         log.debug("Let's play with the sales for today: {}", new Date());
@@ -79,5 +94,36 @@ public class TodaySales {
         statisticsMap.keySet().stream().forEach(store ->
                 System.out.println(store + " stats: " + statisticsMap.get(store))
         );
+
+
+        // new way of generating Sales
+        System.out.println("New way of generating stream of Sales...");
+        streamOf(2).forEach(System.out::println);
+
+        // summarize sale by store / parallel
+        System.out.println("********************************** parallel ***");
+        Map<String, DoubleSummaryStatistics> statisticsMapByThread = streamOf(10000)
+                .parallel()
+                .collect(Collectors.groupingBy(sale -> Thread.currentThread().getName(),
+                        Collectors.summarizingDouble(Sale::total)));
+        System.out.println("Summary by thread: " + statisticsMapByThread);
+        statisticsMapByThread.keySet().stream().sorted().forEach(store ->
+                System.out.println(store + " stats: " + statisticsMapByThread.get(store))
+        );
+
+        // how to use optionals ? let's try to find sales with certain item name
+        Optional<Sale> saleForItem7 = findSaleOf("Item__#7");
+        if(saleForItem7.isPresent()){
+            System.out.println("FOUND: " + saleForItem7.get());
+        } else {
+            System.out.println("NOT FOUND!!!");
+        }
+
+        Optional<Store> item7Store =
+                findSaleOf("Item__#7").map(sale -> sale.getStore());
+        if(item7Store.isPresent()){
+            System.out.println("Store with item 7 found: " + item7Store);
+        }
+
     }
 }
